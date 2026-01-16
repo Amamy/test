@@ -28,6 +28,10 @@
 
         <label for="r">Radius (r): </label>
         <input type="number" id="r" value="150" min="10">
+
+        <label for="randomColor">
+            <input type="checkbox" id="randomColor"> Randomize Colors
+        </label>
     </div>
 
     <canvas id="diamondCanvas" width="600" height="600"></canvas>
@@ -37,10 +41,34 @@
         const ctx = canvas.getContext('2d');
         const nInput = document.getElementById('n');
         const rInput = document.getElementById('r');
+        const randomColorCheckbox = document.getElementById('randomColor');
+
+        let lineColors = [];
+
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function generateLineColors() {
+            const n = parseInt(nInput.value);
+            lineColors = [];
+            // We need a color for every pair (i, j) where i < j
+            // Total pairs = n * (n - 1) / 2
+            // We'll store them in a flat array for simplicity, matching the draw loop order.
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    lineColors.push(getRandomColor());
+                }
+            }
+        }
 
         function draw() {
             const n = parseInt(nInput.value);
             const r = parseInt(rInput.value);
+            const isRandom = randomColorCheckbox.checked;
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
 
@@ -59,14 +87,21 @@
             }
 
             // Draw lines connecting every pair of vertices
-            ctx.beginPath();
+            let colorIndex = 0;
             for (let i = 0; i < n; i++) {
                 for (let j = i + 1; j < n; j++) {
+                    ctx.beginPath();
                     ctx.moveTo(vertices[i].x, vertices[i].y);
                     ctx.lineTo(vertices[j].x, vertices[j].y);
+                    if (isRandom && lineColors[colorIndex]) {
+                        ctx.strokeStyle = lineColors[colorIndex];
+                    } else {
+                        ctx.strokeStyle = 'black';
+                    }
+                    ctx.stroke();
+                    colorIndex++;
                 }
             }
-            ctx.stroke();
 
             // Draw vertices (optional, but looks nice)
             /*
@@ -79,12 +114,17 @@
             */
         }
 
-        // Initial draw
+        // Initial setup
+        generateLineColors();
         draw();
 
         // Event listeners
-        nInput.addEventListener('input', draw);
+        nInput.addEventListener('input', () => {
+            generateLineColors();
+            draw();
+        });
         rInput.addEventListener('input', draw);
+        randomColorCheckbox.addEventListener('change', draw);
     </script>
 
 </body>
